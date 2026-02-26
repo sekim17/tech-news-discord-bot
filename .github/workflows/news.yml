@@ -2,7 +2,7 @@ name: Tech News Bot
 
 on:
   schedule:
-    - cron: "0 9 */2 * *"  # 이틀에 한번 (UTC 기준)
+    - cron: "0 9 */5 * *"  # 이틀에 한번 (UTC 기준)
   workflow_dispatch:      # 수동 실행 가능
 
 jobs:
