@@ -24,14 +24,15 @@ target_companies = [
     "openai"
 ]
 
-# ❌ 금융/정치 제거 키워드
+# ❌ 금융/정치 제외 키워드
 exclude_keywords = [
     "stock", "stocks", "share price", "investment",
     "investor", "market", "nasdaq", "earnings",
     "revenue", "ipo", "trading", "funding",
     "valuation", "profit",
     "bill", "senate", "congress", "law",
-    "government", "regulation", "political"
+    "government", "regulation", "political",
+    "election"
 ]
 
 # ✅ 기술 키워드
@@ -47,13 +48,14 @@ tech_keywords = [
 
 def is_valid_article(title, summary):
     title_lower = title.lower()
-    text = (title + " " + summary).lower()
+    summary_lower = summary.lower()
+    text = title_lower + " " + summary_lower
 
-    # ① 제목에 기업명이 정확히 포함되어야 함
+    # ① 기업명이 title 또는 summary에 있어야 함
     company_found = False
     for company in target_companies:
         pattern = r"\b" + company + r"\b"
-        if re.search(pattern, title_lower):
+        if re.search(pattern, title_lower) or re.search(pattern, summary_lower):
             company_found = True
             break
 
@@ -64,29 +66,39 @@ def is_valid_article(title, summary):
     if not any(word in text for word in tech_keywords):
         return False
 
-    # ③ 금융/정치 키워드 있으면 제외
+    # ③ 금융/정치 기사 제외
     if any(word in text for word in exclude_keywords):
         return False
 
     return True
 
 
-def send_to_discord(title, summary, link):
+def send_embed(title, description, link):
     data = {
         "embeds": [
             {
                 "title": title,
                 "url": link,
-                "description": summary,
+                "description": description,
                 "color": 3447003
             }
         ]
     }
 
-    requests.post(WEBHOOK_URL, json=data)
+    response = requests.post(WEBHOOK_URL, json=data)
+    print("Discord status:", response.status_code)
 
 
-# 🔥 기사 5개 전송
+def send_no_news_message():
+    data = {
+        "content": "📭 오늘은 BigTech AI 관련 주요 기술 뉴스가 없습니다."
+    }
+
+    response = requests.post(WEBHOOK_URL, json=data)
+    print("No news message status:", response.status_code)
+
+
+# 🔥 실행 로직
 count = 0
 
 for article in articles:
@@ -99,21 +111,13 @@ for article in articles:
     clean_summary = re.sub('<.*?>', '', article.summary)
     translated = GoogleTranslator(source='auto', target='ko').translate(clean_summary[:800])
 
-def send_to_discord(title, summary, link):
-    data = {
-        "embeds": [
-            {
-                "title": title,
-                "url": link,
-                "description": summary,
-                "color": 3447003
-            }
-        ]
-    }
-
-    response = requests.post(WEBHOOK_URL, json=data)
-
-    print("Status Code:", response.status_code)
-    print("Response Text:", response.text)
+    send_embed(article.title, translated, article.link)
 
     count += 1
+
+
+# 📭 기사 없으면 자동 메시지 전송
+if count == 0:
+    send_no_news_message()
+
+print("Total sent:", count)
