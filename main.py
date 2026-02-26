@@ -6,7 +6,7 @@ from datetime import datetime
 WEBHOOK_URL = os.environ["DISCORD_WEBHOOK"]
 
 # RSS 뉴스 가져오기 (TechCrunch 예시)
-rss_url = "https://techcrunch.com/feed/"
+rss_url = "https://news.google.com/rss/search?q=artificial+intelligence"
 feed = feedparser.parse(rss_url)
 
 articles = feed.entries[:5]
