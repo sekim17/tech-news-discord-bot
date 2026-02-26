@@ -14,6 +14,7 @@ feed = feedparser.parse(rss_url)
 articles = feed.entries
 
 
+# 🎯 정확히 이 6개 기업만
 target_companies = [
     "microsoft",
     "google",
@@ -23,6 +24,7 @@ target_companies = [
     "openai"
 ]
 
+# ❌ 금융/주식 제거
 exclude_keywords = [
     "stock", "stocks", "share price", "investment",
     "investor", "market", "nasdaq", "earnings",
@@ -30,25 +32,53 @@ exclude_keywords = [
     "valuation", "profit"
 ]
 
+# ✅ 기술 키워드 (하나 이상 포함 필수)
 tech_keywords = [
-    "model", "ai model", "llm", "machine learning",
+    "model", "llm", "machine learning",
     "neural", "training", "inference",
     "chip", "gpu", "semiconductor",
-    "generative", "robotics", "vision model",
-    "foundation model", "research"
+    "generative", "robotics", "vision",
+    "foundation model", "research",
+    "artificial intelligence", "ai system"
 ]
 
 
-def is_bigtech_ai_article(title, summary):
+def contains_company_as_main_subject(title, summary):
+    """
+    1️⃣ 제목에 회사명이 정확한 단어로 포함되면 강하게 통과
+    2️⃣ 요약에만 등장하면 약하게 허용 (기술 키워드와 함께 있을 때만)
+    """
+    title_lower = title.lower()
+    summary_lower = summary.lower()
+
+    for company in target_companies:
+        pattern = r"\b" + company + r"\b"
+
+        # 제목에 등장 → 거의 주체일 확률 높음
+        if re.search(pattern, title_lower):
+            return True
+
+        # 요약에 등장 + 기술 키워드 같이 존재할 때만 허용
+        if re.search(pattern, summary_lower):
+            if any(word in summary_lower for word in tech_keywords):
+                return True
+
+    return False
+
+
+def is_valid_article(title, summary):
     text = (title + " " + summary).lower()
 
-    if not any(company in text for company in target_companies):
-        return False
-
+    # 금융 기사 제거
     if any(word in text for word in exclude_keywords):
         return False
 
+    # 기술 키워드 필수
     if not any(word in text for word in tech_keywords):
+        return False
+
+    # 기업이 주체로 등장해야 함
+    if not contains_company_as_main_subject(title, summary):
         return False
 
     return True
@@ -61,7 +91,7 @@ def send_to_discord(title, summary, link):
                 "title": title,
                 "url": link,
                 "description": summary,
-                "color": 15105570  # 보라색 계열 (구분용)
+                "color": 15105570
             }
         ]
     }
@@ -69,13 +99,14 @@ def send_to_discord(title, summary, link):
     requests.post(WEBHOOK_URL, json=data)
 
 
+# 🔥 필터 후 5개 전송
 count = 0
 
 for article in articles:
     if count >= 5:
         break
 
-    if not is_bigtech_ai_article(article.title, article.summary):
+    if not is_valid_article(article.title, article.summary):
         continue
 
     clean_summary = re.sub('<.*?>', '', article.summary)
