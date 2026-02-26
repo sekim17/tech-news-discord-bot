@@ -24,4 +24,4 @@ jobs:
       - name: 실행
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: python main_bigtech_ai.py
+        run: python main_ai_general.py
