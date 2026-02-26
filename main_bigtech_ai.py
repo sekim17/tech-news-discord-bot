@@ -66,19 +66,21 @@ def contains_company_as_main_subject(title, summary):
     return False
 
 
-def is_valid_article(title, summary):
-    text = (title + " " + summary).lower()
+def is_valid_ai_bigtech_article(title, summary):
+    tl = title.lower()
 
-    # 금융 기사 제거
-    if any(word in text for word in exclude_keywords):
+    # ① 제목에 정확히 기업명이 있어야 함
+    if not any(re.search(r"\b" + c + r"\b", tl) for c in target_companies):
         return False
 
-    # 기술 키워드 필수
+    text = (title + " " + summary).lower()
+
+    # ② 기술 키워드도 (title 또는 summary) 있어야 함
     if not any(word in text for word in tech_keywords):
         return False
 
-    # 기업이 주체로 등장해야 함
-    if not contains_company_as_main_subject(title, summary):
+    # ③ 금융/정치/주식 키워드 있으면 제외
+    if any(word in text for word in exclude_keywords):
         return False
 
     return True
