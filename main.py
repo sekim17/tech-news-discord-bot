@@ -21,7 +21,7 @@ def analyze_article(title, summary, link):
 
     message = "**" + title + "**\n\n"
     message += translated + "\n\n"
-    message += "원문: " + link
+    message += "[기사 바로가기](" + link + ")"
 
     return message
 
