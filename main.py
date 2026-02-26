@@ -20,11 +20,14 @@ def analyze_article(title, summary):
     # 영어 → 한국어 번역
     translated = GoogleTranslator(source='auto', target='ko').translate(clean_summary[:800])
 
-    return f"""
+    return f"**{title}**\n\n{translated}\n\n{link}"
 📌 **{title}**
 
 📰 한글 요약:
 {translated}
+
+🔗 원문 보기:
+{link}
 """
 
 def send_to_discord(message):
@@ -36,5 +39,5 @@ def send_to_discord(message):
 
 # 👇 반드시 맨 아래에서 실행
 for article in articles:
-    message = analyze_article(article.title, article.summary)
+    message = analyze_article(article.title, article.summary, article.link)
     send_to_discord(message)
