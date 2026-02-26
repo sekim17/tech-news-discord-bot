@@ -6,7 +6,7 @@ import os
 from deep_translator import GoogleTranslator
 import re
 
-WEBHOOK_URL = os.environ["DISCORD_WEBHOOK"]
+WEBHOOK_URL = os.environ["DISCORD_WEBHOOK2"]
 
 rss_url = "https://news.google.com/rss/search?q=artificial+intelligence"
 feed = feedparser.parse(rss_url)
