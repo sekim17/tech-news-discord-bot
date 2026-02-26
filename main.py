@@ -13,15 +13,11 @@ feed = feedparser.parse(rss_url)
 articles = feed.entries[:5]
 
 
-def analyze_article(title, summary):
-    # HTML 태그 제거
+def analyze_article(title, summary, link):
     clean_summary = re.sub('<.*?>', '', summary)
-
-    # 영어 → 한국어 번역
     translated = GoogleTranslator(source='auto', target='ko').translate(clean_summary[:800])
 
-    return f"**{title}**\n\n{translated}\n\n{link}"
-📌 **{title}**
+    return f"**{title}**\n\n{translated}\n\n원문: {link}"
 
 📰 한글 요약:
 {translated}
