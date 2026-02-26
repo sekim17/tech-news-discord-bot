@@ -1,0 +1,27 @@
+name: Tech News Bot
+
+on:
+  schedule:
+    - cron: "0 9 */2 * *"  # 이틀에 한번 (UTC 기준)
+  workflow_dispatch:      # 수동 실행 가능
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 가져오기
+        uses: actions/checkout@v3
+
+      - name: Python 설치
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: 라이브러리 설치
+        run: pip install -r requirements.txt
+
+      - name: 실행
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: python main.py
