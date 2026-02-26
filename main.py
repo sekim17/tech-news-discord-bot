@@ -2,6 +2,7 @@ import feedparser
 import requests
 import os
 from datetime import datetime
+from deep_translator import GoogleTranslator
 
 WEBHOOK_URL = os.environ["DISCORD_WEBHOOK"]
 
@@ -9,24 +10,25 @@ WEBHOOK_URL = os.environ["DISCORD_WEBHOOK"]
 rss_url = "https://news.google.com/rss/search?q=artificial+intelligence"
 feed = feedparser.parse(rss_url)
 
-articles = [
-    entry for entry in feed.entries
-    if "AI" in entry.title or "Artificial" in entry.title
-][:5]
-
 def analyze_article(title, summary):
-    # 간단 분석 템플릿 (무료 버전)
+    # HTML 태그 제거 (구글뉴스용)
+    import re
+    clean_summary = re.sub('<.*?>', '', summary)
+
+    # 영어 → 한국어 번역
+    translated = GoogleTranslator(source='auto', target='ko').translate(clean_summary[:800])
+
     return f"""
 📌 **{title}**
 
-📰 요약:
-{summary[:500]}
+📰 한글 요약:
+{translated}
 
-🔍 왜 중요한가:
-이 기사는 기술 산업의 최신 흐름을 보여주며 시장 및 연구 방향에 영향을 줄 가능성이 있음.
+🔎 왜 중요한가:
+AI 산업의 최신 동향을 보여주는 사례임.
 
 📈 향후 영향:
-관련 기술 투자 및 산업 경쟁 심화 예상.
+관련 산업 및 기술 발전에 영향 가능성.
 """
 
 def send_to_discord(message):
