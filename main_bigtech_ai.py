@@ -14,7 +14,7 @@ feed = feedparser.parse(rss_url)
 articles = feed.entries
 
 
-# 🎯 6개 기업
+# 🎯 6개 기업 (제목에 반드시 포함)
 target_companies = [
     "microsoft",
     "google",
@@ -24,7 +24,7 @@ target_companies = [
     "openai"
 ]
 
-# ❌ 금융/정치 제외 키워드
+# ❌ 금융/정치 기사 제거
 exclude_keywords = [
     "stock", "stocks", "share price", "investment",
     "investor", "market", "nasdaq", "earnings",
@@ -35,7 +35,7 @@ exclude_keywords = [
     "election"
 ]
 
-# ✅ 기술 키워드
+# ✅ 기술 키워드 필수
 tech_keywords = [
     "model", "llm", "machine learning",
     "neural", "training", "inference",
@@ -48,14 +48,13 @@ tech_keywords = [
 
 def is_valid_article(title, summary):
     title_lower = title.lower()
-    summary_lower = summary.lower()
-    text = title_lower + " " + summary_lower
+    text = (title + " " + summary).lower()
 
-    # ① 기업명이 title 또는 summary에 있어야 함
+    # ① 제목에 기업명이 정확히 포함되어야 함
     company_found = False
     for company in target_companies:
         pattern = r"\b" + company + r"\b"
-        if re.search(pattern, title_lower) or re.search(pattern, summary_lower):
+        if re.search(pattern, title_lower):
             company_found = True
             break
 
@@ -91,7 +90,7 @@ def send_embed(title, description, link):
 
 def send_no_news_message():
     data = {
-        "content": "📭 오늘은 BigTech AI 관련 주요 기술 뉴스가 없습니다."
+        "content": "📭 오늘은 BigTech 6개 기업 관련 AI 기술 뉴스가 없습니다."
     }
 
     response = requests.post(WEBHOOK_URL, json=data)
@@ -116,7 +115,7 @@ for article in articles:
     count += 1
 
 
-# 📭 기사 없으면 자동 메시지 전송
+# 📭 기사 없으면 자동 전송
 if count == 0:
     send_no_news_message()
 
