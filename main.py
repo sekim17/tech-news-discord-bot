@@ -25,14 +25,7 @@ def analyze_article(title, summary):
 
 📰 한글 요약:
 {translated}
-
-🔎 왜 중요한가:
-AI 산업의 최신 동향을 보여주는 사례임.
-
-📈 향후 영향:
-관련 산업 및 기술 발전에 영향 가능성.
 """
-
 
 def send_to_discord(message):
     data = {
