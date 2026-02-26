@@ -10,6 +10,12 @@ WEBHOOK_URL = os.environ["DISCORD_WEBHOOK"]
 rss_url = "https://news.google.com/rss/search?q=artificial+intelligence"
 feed = feedparser.parse(rss_url)
 
+articles = feed.entries[:5]
+
+for article in articles:
+    message = analyze_article(article.title, article.summary)
+    send_to_discord(message)
+
 def analyze_article(title, summary):
     # HTML 태그 제거 (구글뉴스용)
     import re
