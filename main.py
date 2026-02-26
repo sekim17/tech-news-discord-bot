@@ -8,32 +8,31 @@ import re
 
 WEBHOOK_URL = os.environ["DISCORD_WEBHOOK"]
 
-# RSS 뉴스 가져오기
+# Google News AI RSS
 rss_url = "https://news.google.com/rss/search?q=artificial+intelligence"
 feed = feedparser.parse(rss_url)
 
 articles = feed.entries[:5]
 
 
-def analyze_article(title, summary, link):
-    clean_summary = re.sub('<.*?>', '', summary)
-    translated = GoogleTranslator(source='auto', target='ko').translate(clean_summary[:800])
-
-    message = "**" + title + "**\n\n"
-    message += translated + "\n\n"
-    message += "🔗 <" + link + ">"
-
-    return message
-
-
-def send_to_discord(message):
+def send_to_discord(title, summary, link):
     data = {
-        "content": message
+        "embeds": [
+            {
+                "title": title,      # 제목 (클릭 가능)
+                "url": link,         # 제목 클릭 시 이동
+                "description": summary,
+                "color": 5814783     # 파란 계열 색상
+            }
+        ]
     }
+
     requests.post(WEBHOOK_URL, json=data)
 
 
-# 실행 부분 (맨 아래)
+# 실행 부분
 for article in articles:
-    message = analyze_article(article.title, article.summary, article.link)
-    send_to_discord(message)
+    clean_summary = re.sub('<.*?>', '', article.summary)
+    translated = GoogleTranslator(source='auto', target='ko').translate(clean_summary[:800])
+
+    send_to_discord(article.title, translated, article.link)
