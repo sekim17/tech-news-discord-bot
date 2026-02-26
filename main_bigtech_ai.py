@@ -99,6 +99,21 @@ for article in articles:
     clean_summary = re.sub('<.*?>', '', article.summary)
     translated = GoogleTranslator(source='auto', target='ko').translate(clean_summary[:800])
 
-    send_to_discord(article.title, translated, article.link)
+def send_to_discord(title, summary, link):
+    data = {
+        "embeds": [
+            {
+                "title": title,
+                "url": link,
+                "description": summary,
+                "color": 3447003
+            }
+        ]
+    }
+
+    response = requests.post(WEBHOOK_URL, json=data)
+
+    print("Status Code:", response.status_code)
+    print("Response Text:", response.text)
 
     count += 1
