@@ -9,7 +9,10 @@ WEBHOOK_URL = os.environ["DISCORD_WEBHOOK"]
 rss_url = "https://news.google.com/rss/search?q=artificial+intelligence"
 feed = feedparser.parse(rss_url)
 
-articles = feed.entries[:5]
+articles = [
+    entry for entry in feed.entries
+    if "AI" in entry.title or "Artificial" in entry.title
+][:5]
 
 def analyze_article(title, summary):
     # 간단 분석 템플릿 (무료 버전)
