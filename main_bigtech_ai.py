@@ -4,12 +4,11 @@ import feedparser
 import requests
 import os
 import re
-import hashlib
 from deep_translator import GoogleTranslator
 
 WEBHOOK_URL = os.environ["DISCORD_WEBHOOK2"]
 
-# 🔥 RSS 소스들
+# 🔥 RSS 소스
 RSS_SOURCES = [
     "https://techcrunch.com/category/artificial-intelligence/feed/",
     "https://venturebeat.com/category/ai/feed/",
@@ -19,14 +18,14 @@ RSS_SOURCES = [
     "https://blog.google/rss/"
 ]
 
-# 🎯 BigTech 기업
+# 🎯 기업 태그 + 색상
 COMPANIES = {
-    "microsoft": "MSFT",
-    "google": "GOOG",
-    "meta": "META",
-    "amazon": "AMZN",
-    "apple": "AAPL",
-    "openai": "OPENAI"
+    "microsoft": {"tag": "MSFT", "color": 0x0078D4},
+    "google": {"tag": "GOOG", "color": 0x4285F4},
+    "meta": {"tag": "META", "color": 0x0668E1},
+    "amazon": {"tag": "AMZN", "color": 0xFF9900},
+    "apple": {"tag": "AAPL", "color": 0x111111},
+    "openai": {"tag": "OPENAI", "color": 0x10A37F}
 }
 
 TECH_KEYWORDS = [
@@ -45,51 +44,45 @@ EXCLUDE_KEYWORDS = [
 ]
 
 
-# 🔹 제목 정규화 (중복 제거용)
 def normalize_title(title):
     return re.sub(r'[^a-z0-9]', '', title.lower())
 
 
-# 🔹 기사 점수 계산
 def score_article(title, summary):
     title_l = title.lower()
     summary_l = summary.lower()
     text = title_l + " " + summary_l
 
     score = 0
-    company_tag = None
+    company_data = None
 
-    # 기업 점수
-    for name, tag in COMPANIES.items():
+    for name, data in COMPANIES.items():
         if re.search(r"\b" + name + r"\b", title_l):
             score += 3
-            company_tag = tag
+            company_data = data
         elif re.search(r"\b" + name + r"\b", summary_l):
             score += 2
-            company_tag = tag
+            company_data = data
 
-    # 기술 키워드 점수
     for word in TECH_KEYWORDS:
         if word in text:
             score += 1
 
-    # 제외 키워드 감점
     for word in EXCLUDE_KEYWORDS:
         if word in text:
             score -= 5
 
-    return score, company_tag
+    return score, company_data
 
 
-# 🔹 디스코드 전송
-def send_embed(title, description, link):
+def send_embed(title, description, link, color):
     data = {
         "embeds": [
             {
                 "title": title,
                 "url": link,
                 "description": description,
-                "color": 3447003
+                "color": color
             }
         ]
     }
@@ -103,7 +96,7 @@ def send_no_news():
     })
 
 
-# 🔥 1️⃣ 모든 RSS 수집
+# 🔥 RSS 수집
 all_articles = []
 
 for url in RSS_SOURCES:
@@ -116,7 +109,7 @@ for url in RSS_SOURCES:
         })
 
 
-# 🔥 2️⃣ 중복 제거
+# 🔥 중복 제거
 unique_articles = {}
 for article in all_articles:
     key = normalize_title(article["title"])
@@ -126,34 +119,41 @@ for article in all_articles:
 articles = list(unique_articles.values())
 
 
-# 🔥 3️⃣ 점수 계산 및 필터링
+# 🔥 점수 계산
 scored_articles = []
 
 for article in articles:
-    score, tag = score_article(article["title"], article["summary"])
-    if score >= 5 and tag:  # 기준점
+    score, company_data = score_article(article["title"], article["summary"])
+    if score >= 5 and company_data:
         scored_articles.append({
-            "title": f"[{tag}] {article['title']}",
+            "title": f"[{company_data['tag']}] {article['title']}",
             "summary": article["summary"],
             "link": article["link"],
-            "score": score
+            "score": score,
+            "color": company_data["color"]
         })
 
 
-# 🔥 4️⃣ 점수순 정렬
+# 🔥 점수순 정렬
 scored_articles.sort(key=lambda x: x["score"], reverse=True)
 
 
-# 🔥 5️⃣ 상위 5개 전송
+# 🔥 상위 5개 전송
 count = 0
 
 for article in scored_articles[:5]:
     clean_summary = re.sub('<.*?>', '', article["summary"])
     translated = GoogleTranslator(source='auto', target='ko').translate(clean_summary[:800])
-    send_embed(article["title"], translated, article["link"])
+
+    send_embed(
+        article["title"],
+        translated,
+        article["link"],
+        article["color"]
+    )
+
     count += 1
 
 
-# 🔥 기사 없으면 알림
 if count == 0:
     send_no_news()
