@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import feedparser
 import requests
 import os
@@ -17,14 +19,12 @@ def analyze_article(title, summary, link):
     clean_summary = re.sub('<.*?>', '', summary)
     translated = GoogleTranslator(source='auto', target='ko').translate(clean_summary[:800])
 
-    return f"**{title}**\n\n{translated}\n\n원문: {link}"
+    message = "**" + title + "**\n\n"
+    message += translated + "\n\n"
+    message += "원문: " + link
 
-📰 한글 요약:
-{translated}
+    return message
 
-🔗 원문 보기:
-{link}
-"""
 
 def send_to_discord(message):
     data = {
@@ -33,7 +33,7 @@ def send_to_discord(message):
     requests.post(WEBHOOK_URL, json=data)
 
 
-# 👇 반드시 맨 아래에서 실행
+# 실행 부분 (맨 아래)
 for article in articles:
     message = analyze_article(article.title, article.summary, article.link)
     send_to_discord(message)
